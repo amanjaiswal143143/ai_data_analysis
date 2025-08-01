@@ -1,11 +1,17 @@
+import os
 import json
 import tempfile
 import csv
 import streamlit as st
 import pandas as pd
+from dotenv import load_dotenv
 from phi.agent.duckdb import DuckDbAgent
 
-# Preprocess uploaded file
+# 🔐 Load API key from .env file
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+# 📁 Preprocess uploaded file
 def preprocess_and_save(file):
     try:
         if file.name.endswith('.csv'):
@@ -37,21 +43,12 @@ def preprocess_and_save(file):
         st.error(f"Error processing file: {e}")
         return None, None, None
 
-# Streamlit UI
+# 🌐 Streamlit UI
 st.title("📊 AI Data Analyst Agent")
-
-with st.sidebar:
-    st.header("🔑 API Key")
-    openai_key = st.text_input("Enter OpenAI API key:", type="password")
-    if openai_key:
-        st.session_state.openai_key = openai_key
-        st.success("✅ API key saved!")
-    else:
-        st.warning("Please enter your OpenAI API key.")
 
 uploaded_file = st.file_uploader("📁 Upload CSV or Excel file", type=["csv", "xlsx"])
 
-if uploaded_file and "openai_key" in st.session_state:
+if uploaded_file:
     temp_path, columns, df = preprocess_and_save(uploaded_file)
 
     if temp_path and columns and df is not None:
@@ -69,10 +66,9 @@ if uploaded_file and "openai_key" in st.session_state:
             ]
         }
 
-        # ✅ Use raw dictionaries instead of class instances
         model = {
             "id": "gpt-4",
-            "api_key": st.session_state.openai_key,
+            "api_key": openai_api_key,
             "provider": "openai"
         }
 
